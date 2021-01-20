@@ -48,13 +48,13 @@ body{
     flex-shrink: 0;
     flex-basis: 300px;
     padding: 40px;
-    border: solid 2px #47c0c0;
+    /* border: solid 2px #47c0c0; */
 }
 
 .section-item-medium{
     justify-content: center;
     flex-basis: 300px;
-    border: solid 2px #1d5858;
+    /* border: solid 2px #1d5858; */
 }
 
 .section-collaborators{
@@ -103,8 +103,12 @@ body{
 }
 
 footer{
+    text-align: center;
     background-color: #0b1f1f;
     color: antiquewhite;
     width: 100%;
     min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
