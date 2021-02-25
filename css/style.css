@@ -24,10 +24,6 @@ body{
     /* border: solid 2px #47c0c0; */
 }
 
-.information{
-    
-}
-
 .section-video{
     display: flex;
     flex-wrap: wrap;
@@ -86,7 +82,7 @@ body{
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    flex-direction: row;   
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     padding: 3.875em 0;
