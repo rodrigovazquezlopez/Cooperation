@@ -18,9 +18,9 @@ uriDron  = 'radio://0/80/2M/E7E7E7E7E7' # 02
 
 # Filenames
 dat = datetime.datetime.now()
-directory = "./data/oneDim/"
-filenameDron = directory + dat.strftime("VueloOneDim_%d%b%Y_%H.%M_log") + ".txt"
-filenameMoves = directory + dat.strftime("MovesOneDim_%d%b%Y_%H.%M_log") + ".txt"
+directory = "./data/twoDim/"
+filenameDron = directory + dat.strftime("VueloTwoDim_%d%b%Y_%H.%M_log") + ".txt"
+filenameMoves = directory + dat.strftime("MovesTwoDim_%d%b%Y_%H.%M_log") + ".txt"
 
 # list to save dron logging positions
 dronPositions = []
@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.ERROR)
 def log_stab_callback(timestamp, data, logconf):
     global dronPositions
     # print('[%d][%s]: %s' % (timestamp, logconf.name, data))
-    position = (timestamp, data["stateEstimate.x"], data["stateEstimate.y"], data["stateEstimate.z"], data["acc.x"])
+    position = (timestamp, data["stateEstimate.x"], data["stateEstimate.y"], data["stateEstimate.z"], data["acc.x"], data["acc.y"])
     dronPositions.append(position)
 
 
@@ -50,46 +50,60 @@ if __name__ == '__main__':
         lg_stab.add_variable('stateEstimate.y', 'float')
         lg_stab.add_variable('stateEstimate.z', 'float')
         lg_stab.add_variable('acc.x', 'float')
+        lg_stab.add_variable('acc.y', 'float')
         scf2.cf.log.add_config(lg_stab)
         lg_stab.data_received_cb.add_callback(log_stab_callback)
         lg_stab.start()
 
         with PositionHlCommander(scf2, default_height=0.4, controller=PositionHlCommander.CONTROLLER_PID) as pc:            
             x = 0.0
+            y = 0.0
             # go to start (0, 0, 0.5)
-            pc.go_to(0, 0, 0.5)
+            pc.go_to(0, 0, 0.4)
             time.sleep(2)
-            cntIzq = 0
-            cntDer = 0
+            cntXplus = 0
+            cntXminus = 0
+            cntYplus = 0
+            cntYminus = 0
             move = 'L'
-            for i in range(20):
-                r = random.randint(0, 1)
+            for i in range(50):
+                r = random.randint(0, 3)
                 random.seed()
                 if r == 0:
-                    print("Moviendo a la derecha")
-                    move = 'R'
-                    cntDer += 1
+                    print("Moviendo x+")
+                    move = 'x+'
+                    cntXplus += 1
                     x += 0.1
-                else:
-                    print("Moviendo a la izquierda")
-                    move = 'L'
-                    cntIzq += 1
+                elif r == 1:
+                    print("Moviendo x-")
+                    move = 'x-'
+                    cntXminus += 1
                     x -= 0.1
+                elif r == 2: 
+                    print("Moviendo y+")
+                    move = 'y+'
+                    cntYplus += 1
+                    y += 0.1
+                else:
+                    print("Moviendo y-")
+                    move = 'y-'
+                    cntYminus += 1
+                    y -= 0.1
                 # t = datetime.datetime.now()
-                totalmoves = (i, move, cntDer, cntIzq)
+                totalmoves = (i, move, cntXplus, cntXminus, cntYplus, cntYminus)
                 counterPositions.append(totalmoves)
-                pc.go_to(x, 0, 0.5)
+                pc.go_to(x, y, 0.4)
                 time.sleep(1)
 
             lg_stab.stop()
             with open(filenameDron, 'w') as f:
                 for elem in dronPositions:
-                    text = "{}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4])
+                    text = "{}, {}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5])
                     f.write(text)
                     
             with open(filenameMoves, 'w') as f:
                 for elem in counterPositions:
-                    text = "{}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3])
+                    text = "{}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4])
                     f.write(text)
 
         
