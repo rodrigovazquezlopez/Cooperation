@@ -119,7 +119,7 @@ def consumer(queue):
             for g in range(1, n):
                 x_i = x*(g/n)
                 y_i = y*(g/n)
-                s = '{}, {}, {}\n'.format{x_i, y_i, z}
+                s = '{}, {}, {}\n'.format(x_i, y_i, z)
                 fileQueue.write(s)
                 print('Step {}  ({}, {}, {})'.format(g, x_i, y_i, z))
                 scf2.cf.commander.send_position_setpoint(x_i, y_i, z, 0)
@@ -127,7 +127,7 @@ def consumer(queue):
         else:
             print('Dron Inital pos ({}, {}, {})'.format(x, y, z))
             scf2.cf.commander.send_position_setpoint(x, y, z, 0)
-            s = '{}, {}, {}\n'.format{x, y, z}
+            s = '{}, {}, {}\n'.format(x, y, z)
             fileQueue.write(s)
             time.sleep(1)
 
