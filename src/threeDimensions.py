@@ -18,13 +18,15 @@ uriDron  = 'radio://0/80/2M/E7E7E7E7E7' # 02
 
 # Filenames
 dat = datetime.datetime.now()
-directory = "./data/oneDim/"
-filenameDron = directory + dat.strftime("VueloOneDim_%d%b%Y_%H.%M_log") + ".txt"
-filenameMoves = directory + dat.strftime("MovesOneDim_%d%b%Y_%H.%M_log") + ".txt"
+directory = "./data/threeDim/"
+filenameDron = directory + dat.strftime("VueloThreeDim_%d%b%Y_%H.%M_log") + ".txt"
+filenameMoves = directory + dat.strftime("MovesThreeDim_%d%b%Y_%H.%M_log") + ".txt"
 
 # list to save dron logging positions
 dronPositions = []
 counterPositions = []
+thresholdZMax = 1.1
+thresholdZMin = 0.2
 
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)
@@ -34,7 +36,7 @@ logging.basicConfig(level=logging.ERROR)
 def log_stab_callback(timestamp, data, logconf):
     global dronPositions
     # print('[%d][%s]: %s' % (timestamp, logconf.name, data))
-    position = (timestamp, data["stateEstimate.x"], data["stateEstimate.y"], data["stateEstimate.z"], data["acc.x"])
+    position = (timestamp, data["stateEstimate.x"], data["stateEstimate.y"], data["stateEstimate.z"], data["acc.x"], data["acc.y"])
     dronPositions.append(position)
 
 
@@ -50,47 +52,81 @@ if __name__ == '__main__':
         lg_stab.add_variable('stateEstimate.y', 'float')
         lg_stab.add_variable('stateEstimate.z', 'float')
         lg_stab.add_variable('acc.x', 'float')
+        lg_stab.add_variable('acc.y', 'float')
         scf2.cf.log.add_config(lg_stab)
         lg_stab.data_received_cb.add_callback(log_stab_callback)
         lg_stab.start()
 
         with PositionHlCommander(scf2, default_height=0.4, controller=PositionHlCommander.CONTROLLER_PID) as pc:            
             x = 0.0
+            y = 0.0
+            z = 0.5
             # go to start (0, 0, 0.5)
             pc.go_to(0, 0, 0.5)
             time.sleep(2)
-            cntIzq = 0
-            cntDer = 0
-            move = 'L'
+            cntXplus = 0
+            cntXminus = 0
+            cntYplus = 0
+            cntYminus = 0
+            cntZplus = 0
+            cntZminus = 0
             for i in range(40):
                 print(i)
                 r = random.randint(0, 1)
                 random.seed()
                 if r == 0:
-                    print("Moviendo a la derecha")
-                    move = 'R'
-                    cntDer += 1
+                    print("Moviendo x+")
+                    moveX = 'x+'
+                    cntXplus += 1
                     x += 0.1
                 else:
-                    print("Moviendo a la izquierda")
-                    move = 'L'
-                    cntIzq += 1
+                    print("Moviendo x-")
+                    moveX = 'x-'
+                    cntXminus += 1
                     x -= 0.1
+                
+                r = random.randint(0, 1)
+                random.seed()
+                if r == 0: 
+                    print("Moviendo y+")
+                    moveY = 'y+'
+                    cntYplus += 1
+                    y += 0.1
+                else:
+                    print("Moviendo y-")
+                    moveY = 'y-'
+                    cntYminus += 1
+                    y -= 0.1
+
+                r = random.randint(0, 1)
+                random.seed()
+                if r == 0: 
+                    print("Moviendo z+")
+                    moveZ = 'y+'
+                    cntZplus += 1
+                    if z < thresholdZMax:
+                        z += 0.1
+                else:
+                    print("Moviendo z-")
+                    moveZ = 'y-'
+                    cntZminus += 1
+                    if z > thresholdZMin:
+                        z -= 0.1
                 # t = datetime.datetime.now()
-                totalmoves = (i, x, move, cntDer, cntIzq)
+                totalmoves = (i, x, y, z, moveX, moveY, moveZ, cntXplus, cntXminus, cntYplus, cntZminus, cntZplus)
                 counterPositions.append(totalmoves)
-                pc.go_to(x, 0, 0.5)
+                pc.go_to(x, y, z)
                 time.sleep(1)
 
             lg_stab.stop()
             with open(filenameDron, 'w') as f:
                 for elem in dronPositions:
-                    text = "{}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4])
+                    text = "{}, {}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5])
                     f.write(text)
                     
             with open(filenameMoves, 'w') as f:
                 for elem in counterPositions:
-                    text = "{}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4])
+                    text = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], elem[6], elem[7], elem[8], elem[9], elem[10], elem[11])
                     f.write(text)
 
         
