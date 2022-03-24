@@ -8,19 +8,7 @@ class Point:
         self.y = y
 
     def getPoint(self):
-        return [self.x, self.y]
-
-    def incX(self):
-        self.x += 0.1
-    
-    def decX(self):
-        self.x -= 0.1
-    
-    def incY(self):
-        self.y += 0.1
-
-    def decY(self):
-        self.y -= 0.1
+        return (self.x, self.y)
 
 class Cell:
     def __init__(self, coord, father, type):
@@ -30,8 +18,13 @@ class Cell:
         self.gfunc = math.dist(coord.getPoint(), father.getPoint())
         self.hfunc = manhattanDistance(coord, father)
         self.ffunc = self.gfunc + self.hfunc
-
         # falta agregar el tipo de terreno
+
+    def setFather(self, newFather):
+        self.father = newFather
+        self.gfunc = math.dist(self.coord.getPoint(), newFather.getPoint())
+        self.hfunc = manhattanDistance(self.coord, newFather)
+        self.ffunc = self.gfunc + self.hfunc
         
     def toString(self):
         return "Coord: {}, Father: {}, Type: {}, g(n): {}, h(n):{}, f(n): {}".format(self.coord.getPoint(), self.father.getPoint(), self.type, self.gfunc, self.hfunc, self.ffunc)
@@ -39,89 +32,132 @@ class Cell:
 def manhattanDistance(p1, p2):
     return math.fabs(p1.x - p2.x) + math.fabs(p1.y - p2.y)
 
-def getAdyacentCells(cell):
-    
+def getAdyacentCells(cell):   
     adyacents = []
     for i in range(8):
-        #newPoint = calculateAdyacent(point, i)
-        basePoint = cell.coord
-        print(basePoint.getPoint())
-        if i == 0:
-            basePoint.incX()
-            basePoint.incY()
-        elif i == 1:
-            basePoint.incX()
-        elif i == 2:
-            basePoint.incX()
-            basePoint.decY()
-        elif i == 3:
-            basePoint.decY()
-        elif i == 4:
-            basePoint.decX()
-            basePoint.decY()
-        elif i == 5:
-            basePoint.decX()
-        elif i == 6:
-            basePoint.decX()
-            basePoint.incY()
-        else:
-            basePoint.incY()
-        print("newpoint: {}".format(basePoint.getPoint()))
-        b = Cell(basePoint, cell.coord, 100)
-        print(b.toString())
-        adyacents.append(b)
+        basePoint = cell.coord.getPoint()
+        adyPoint = calculateAdyacent(basePoint, i)
+        adyCell = Cell(adyPoint, cell.coord, 100)
+        adyacents.append(adyCell)
     return adyacents
 
 def calculateAdyacent(point, index):
+    x = point[0]
+    y = point[1]
     if index == 0:
-        point.incX()
-        point.incY()
+        x += 0.1
+        y += 0.1
     elif index == 1:
-        point.incX()
+        x += 0.1
     elif index == 2:
-        point.incX()
-        point.decY()
+        x += 0.1
+        y -= 0.1
     elif index == 3:
-        point.decY()
+        y -= 0.1
     elif index == 4:
-        point.decX()
-        point.decY()
+        x -= 0.1
+        y -= 0.1
     elif index == 5:
-        point.decX()
+        x -= 0.1
     elif index == 6:
-        point.decX()
-        point.incY()
+        x -= 0.1
+        y += 0.1
     else:
-        point.incY()
-    #print("pinoint: {}".format(point.getPoint()))
-    return point
+        y += 0.1
+    res = Point(x, y)
+    return res
 
 
-openList = []
-closedList = []
+class CellList:
+    def __init__(self):
+        self.list = []
+    
+    def addCell(self, cell):
+        self.list.append(cell)
 
-p_i = Point(-1.4, -1.4)
-p_f = Point(1.4, 1.4)
+    def pop(self):
+        return self.list.pop()
+
+    def getLenght(self):
+        return len(self.list)
+
+    def isCellinList(self, cell):
+        if len(self.list) != 0:
+            for element in self.list:
+                if element.coord.getPoint() == cell.coord.getPoint():
+                    return True
+            return False
+
+    def getIndex(self, cell):
+        i = 0
+        if len(self.list) != 0:
+            for element in self.list:
+                if element.coord.getPoint() == cell.coord.getPoint():
+                    return i
+                i += 1
+        return -1
+
+    def orderByF(self):
+        self.list.sort(key=lambda x: x.ffunc)
+
+    def printList(self):
+        for element in self.list:
+            print(element.toString())
+
+
+    
+
+openList = CellList()
+closedList = CellList()
+ended = False
+
+p_i = Point(0.0, 0.0)
+p_f = Point(0.3, 0.3)
 
 # paso 0
 initialCell = Cell(p_i, p_i, 100)
 print(initialCell.toString())
-openList.append(initialCell)
-print(len(openList))
+openList.addCell(initialCell)
+print(openList.getLenght())
 
-# paso 1
+step = 0
 
-c1 = openList.pop()
-print(c1.toString())
+while ended == False:
+    # paso 1
+    c1 = openList.pop()
+    print(c1.toString())
+    closedList.addCell(c1)
 
-closedList.append(c1)
+    # paso 2
+    print('Adyacentes')
+    adyacents = getAdyacentCells(c1)
+    print(len(adyacents))
 
-# paso 2
+    # paso 3
+    for element in adyacents:
+        if element.coord.getPoint() == p_f.getPoint():
+            print("llegamos")
+            ended = True
+        elif element.type < 100:
+            print("ignoramos")
+        elif closedList.isCellinList(element) == True:
+            print("Ignoramos")
+        elif openList.isCellinList(element) == True:
+            idx = openList.getIndex(element)
+            if openList.list[idx].gfunc > element.gfunc:
+                openList.list[idx] = element
+        else:
+            openList.addCell(element)
 
-print('Adyacentes')
-ady = getAdyacentCells(c1)
-for x in ady:
-    print(x.toString())
+    # paso 4
+    openList.orderByF()
 
+    print("Step: {}\n".format(step))
 
+    print("open list")
+    openList.printList()
 
+    print("closed list")
+    closedList.printList()
+    step += 1
+    input("wait...")
